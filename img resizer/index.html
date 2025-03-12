@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Resizer & Compressor</title>
+    <style>
+        body { 
+            display: flex; 
+            height: 100vh; 
+            align-items: center; 
+            justify-content: center; 
+            background: linear-gradient(135deg, #e0eafc, #cfdef3); 
+            font-family: 'Poppins', sans-serif; 
+        }
+        .container { 
+            background: #fff; 
+            padding: 30px; 
+            border-radius: 20px; 
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2); 
+            max-width: 400px; 
+            width: 100%; 
+            text-align: center; 
+        }
+        h2 { 
+            color: #007aff; 
+            margin-bottom: 20px; 
+        }
+        input, button, select { 
+            width: 100%; 
+            margin: 10px 0; 
+            padding: 12px; 
+            border: 2px solid #007aff; 
+            border-radius: 12px; 
+            outline: none; 
+        }
+        button { 
+            background: #007aff; 
+            color: #fff; 
+            cursor: pointer; 
+            border: none; 
+            transition: background 0.3s ease, transform 0.2s ease; 
+        }
+        button:hover { 
+            background: #005ecb; 
+            transform: translateY(-3px); 
+        }
+        #downloadLink { 
+            display: block; 
+            margin-top: 15px; 
+            text-decoration: none; 
+            background: #32d74b; 
+            color: #fff; 
+            padding: 10px; 
+            border-radius: 12px; 
+        }
+        #downloadLink:hover { 
+            background: #28b53c; 
+            transform: translateY(-3px); 
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Image Resizer & Compressor</h2>
+        <input type="file" id="imageInput" accept="image/*">
+        <input type="number" id="widthInput" placeholder="Enter Width">
+        <select id="widthUnit">
+            <option value="px">px</option>
+            <option value="cm">cm</option>
+        </select>
+        <input type="number" id="heightInput" placeholder="Enter Height">
+        <select id="heightUnit">
+            <option value="px">px</option>
+            <option value="cm">cm</option>
+        </select>
+        <button onclick="resizeImage()">Resize Image</button>
+
+        <input type="number" id="qualityInput" placeholder="Quality (1-100)" min="1" max="100">
+        <button onclick="compressImage()">Compress Image</button>
+
+        <canvas id="canvas" style="display:none;"></canvas>
+        <a id="downloadLink" download="processed_image.jpg" style="display:none;">Download Image</a>
+    </div>
+
+    <script>
+        function convertCmToPx(cm) {
+            return cm * 37.795275591; // 1 cm ≈ 37.795 px
+        }
+
+        function resizeImage() {
+            const imageInput = document.getElementById('imageInput').files[0];
+            const width = parseInt(document.getElementById('widthInput').value);
+            const widthUnit = document.getElementById('widthUnit').value;
+            const height = parseInt(document.getElementById('heightInput').value);
+            const heightUnit = document.getElementById('heightUnit').value;
+
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+
+            if (!imageInput) {
+                alert('Please select an image.');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const img = new Image();
+                img.src = e.target.result;
+                img.onload = function () {
+                    canvas.width = widthUnit === 'cm' ? convertCmToPx(width) : width || img.width;
+                    canvas.height = heightUnit === 'cm' ? convertCmToPx(height) : height || img.height;
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+                    const downloadLink = document.getElementById('downloadLink');
+                    downloadLink.href = canvas.toDataURL('image/jpeg');
+                    downloadLink.style.display = 'block';
+                    downloadLink.innerHTML = 'Download Resized Image';
+                };
+            };
+            reader.readAsDataURL(imageInput);
+        }
+
+        function compressImage() {
+            const imageInput = document.getElementById('imageInput').files[0];
+            const quality = parseFloat(document.getElementById('qualityInput').value) / 100;
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+
+            if (!imageInput) {
+                alert('Please select an image.');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const img = new Image();
+                img.src = e.target.result;
+                img.onload = function () {
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+                    canvas.toBlob((blob) => {
+                        const downloadLink = document.getElementById('downloadLink');
+                        downloadLink.href = URL.createObjectURL(blob);
+                        downloadLink.style.display = 'block';
+                        downloadLink.innerHTML = 'Download Compressed Image';
+                    }, 'image/jpeg', quality || 1.0);
+                };
+            };
+            reader.readAsDataURL(imageInput);
+        }
+    </script>
+</body>
+</html>
